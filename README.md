@@ -1,4 +1,34 @@
-# 🌊 제주어, 표준어 양방향 음성 번역 모델 생성 프로젝트
+# 🌊 제주어, 표준어 양방향 음성 번역 모델 생성 프로젝트 
+  
+## 모델 사용법
+```python
+import torch
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+  
+## Set up the device (GPU or CPU)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+## Load the tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained("Junhoee/Kobart-Jeju-translation")
+model = AutoModelForSeq2SeqLM.from_pretrained("Junhoee/Kobart-Jeju-translation").to(device)
+
+## Set up the input text
+## 문장 입력 전에 방향에 맞게 [제주] or [표준] 토큰을 입력 후 문장 입력
+input_text = "[표준] 안녕하세요"
+
+## Tokenize the input text
+input_ids = tokenizer(input_text, return_tensors="pt", padding=True, truncation=True).input_ids.to(device)
+
+## Generate the translation
+outputs = model.generate(input_ids, max_length=64)
+
+## Decode and print the output
+decoded_output = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print("Model Output:", decoded_output)
+```
+```python
+Model Output: 안녕하수꽈
+```
 
 ## 🎯 1. 프로젝트 소개
 ### 🧑‍🤝‍🧑 **팀원**
@@ -45,20 +75,42 @@
 - Jebert (성능이 별로 좋지 않았음)
 
 ## 📈 4. 주요 성과
-- BLEU 점수
-    - 제주어 -> 표준어 : 0.89
-    - 표준어 -> 제주어 : 0.77
-- 이 모델은 제주 사투리와 표준어 간의 양방향 번역에서 뛰어난 성능을 보였습니다.
+- **최종 BLEU 점수 - 제주어 구술 자료집 데이터 기준**
+    - **제주어 -> 표준어 : 0.76**
+    - **표준어 -> 제주어 : 0.5**
+- **BLEU Score 성능 표**
+
+| 날짜          | 04-13 | 05-03 | 05-06 | 05-13 | 05-21 | 05-24 | 05-26 | 05-30 |
+|---------------|------------|------------|------------|------------|------------|------------|------------|------------|
+| **제주어->표준어 BLEU Score** | 0.56 | 0.59 | 0.42 | 0.64 | 0.70 | 0.74 | **0.76** | 0.74 |
+| **표준어->제주어 BLEU Score** | 0.35 | 0.37 | 0.26 | 0.37 | 0.39 | 0.46 | **0.50** | 0.49 |
+
+- 전체적으로 **우상향하는 BLEU Score을 기록**하였습니다.
 <img src="Picture_polder/BLEU_Score_graph.png" alt="BLEU Score 시각화" width="600"/>
 
-## 🔍 5. 향후 계획
-모델 성능을 더욱 향상시키기 위해 추가 데이터 수집과 모델 파인 튜닝을 계획하고 있습니다.
-인터페이스는 가볍게나마 만들었고 추후에 링크 첨부하겠습니다.
-음성 BY 음성 기능도 구현 중입니다.
+- **인터페이스 구현**
 
-## 6. Etc..
-데이터 출처
-- 한국어 방언 발화 데이터 (AI-Hub 제공) : https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=data&dataSetSn=121
-- 중·노년층 한국어 방언 데이터 (AI-Hub 제공) : https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=data&dataSetSn=71558
-- 카카오 JIT 제주 방언 데이터 (카카오브레인 Github 참조) : https://github.com/kakaobrain/jejueo
-- 생활제주어 데이터 (제주어사전 참조) : https://www.jeju.go.kr/culture/dialect/lifeDialect.htm
+- **음성 인식 기능**
+  - **STT**
+    - 허깅페이스에서 Whisper 모델 받아서 Fine-tuning 진행
+    - 제주어 억양 학습해 text로 변환
+  - **TTS**
+    - 허깅페이스에서 glos TTS, hifigan 모델 받아서 fine-tuning 진행
+    - 제주어 억양으로 음성 표현 시도했지만 실패...
+    - 표준어 음성으로 대신 표현 (gtts 사용)
+
+## 🔍 5. 향후 계획  
+- 양질의 데이터 확보를 위해 추가적인 데이터 수집과 문법적 미세 조정을 통한 전처리 수행
+- 음성 인식 모델의 억양 인식 능력 향상
+- 웹 구현 및 모바일 앱 개발 계획
+
+## 🧹 6. 참조
+- **데이터 출처**
+  - 한국어 방언 발화 데이터 (AI-Hub 제공) : https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=data&dataSetSn=121
+  - 중·노년층 한국어 방언 데이터 (AI-Hub 제공) : https://www.aihub.or.kr/aihubdata/data/view.do?currMenu=115&topMenu=100&aihubDataSe=data&dataSetSn=71558
+  - 카카오 JIT 제주 방언 데이터 (카카오브레인 Github 참조) : https://github.com/kakaobrain/jejueo
+  - 생활제주어 데이터 (제주어사전 참조) : https://www.jeju.go.kr/culture/dialect/lifeDialect.htm
+- **모델 출처**
+  - Kobart Hugging Face : https://huggingface.co/gogamza/kobart-base-v2
+  - Whisper Hugging Face : https://huggingface.co/openai/whisper-large-v2
+  - Kobart Github : https://github.com/SKT-AI/KoBART
